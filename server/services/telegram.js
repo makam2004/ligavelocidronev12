@@ -1094,6 +1094,17 @@ async function handleHelpCallback(callbackQuery) {
 }
 
 export async function handleTelegramUpdate(update) {
+  const diagnosticMessage = update?.message || update?.edited_message;
+  const diagnosticCallback = update?.callback_query;
+  console.log('TELEGRAM_UPDATE_DIAGNOSTIC', {
+    updateId: update?.update_id ?? null,
+    type: diagnosticCallback ? 'callback_query' : diagnosticMessage ? 'message' : 'other',
+    chatId: diagnosticMessage?.chat?.id ?? diagnosticCallback?.message?.chat?.id ?? null,
+    chatType: diagnosticMessage?.chat?.type ?? diagnosticCallback?.message?.chat?.type ?? null,
+    chatTitle: diagnosticMessage?.chat?.title ?? diagnosticCallback?.message?.chat?.title ?? null,
+    text: diagnosticMessage?.text ?? null,
+    fromId: diagnosticMessage?.from?.id ?? diagnosticCallback?.from?.id ?? null
+  });
   const callbackQuery = update?.callback_query;
   if (callbackQuery) {
     return handleHelpCallback(callbackQuery);
@@ -1104,20 +1115,13 @@ export async function handleTelegramUpdate(update) {
     return { handled: false, reason: 'No hay mensaje de texto procesable.' };
   }
 
-  if (!isAllowedChat(message.chat.id)) {
-    return { handled: false, reason: 'Chat no autorizado.' };
-  }
-
   const { command, args } = cleanCommand(message.text);
   if (!command.startsWith('/')) {
     return { handled: false, reason: 'No es un comando.' };
   }
 
-  if (command === '/ping') {
-    await sendTelegramMessage(message.chat.id, '✅ Bot activo y escuchando.', { messageThreadId: message.message_thread_id });
-    return { handled: true, command };
-  }
-
+  // Comando temporal permitido incluso en chats aún no autorizados.
+  // Sirve para obtener el ID del nuevo grupo de administradores.
   if (command === '/chatid') {
     await sendTelegramMessage(
       message.chat.id,
@@ -1129,6 +1133,19 @@ export async function handleTelegramUpdate(update) {
     );
     return { handled: true, command };
   }
+
+
+  if (!isAllowedChat(message.chat.id)) {
+    return { handled: false, reason: 'Chat no autorizado.' };
+  }
+
+
+
+  if (command === '/ping') {
+    await sendTelegramMessage(message.chat.id, '✅ Bot activo y escuchando.', { messageThreadId: message.message_thread_id });
+    return { handled: true, command };
+  }
+
 
   if (command === '/tracks') {
     const tracks = await listTracks({ activeOnly: true });
