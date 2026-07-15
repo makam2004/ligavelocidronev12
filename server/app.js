@@ -46,11 +46,24 @@ export function createApp() {
   }));
 
   app.post('/api/pilots/register', asyncHandler(async (req, res) => {
+    console.log('[REGISTRO_PILOTO] Solicitud recibida.', {
+      name: String(req.body?.name || '').trim() || '(vacío)'
+    });
+
     const pilot = validatePilotRegistrationInput(req.body || {});
     const result = await registerPendingPilot(pilot);
 
+    console.log('[REGISTRO_PILOTO] Solicitud guardada.', {
+      pilotId: result?.pilot?.id || null,
+      name: result?.pilot?.name || pilot.name,
+      created: Boolean(result?.created),
+      updated: Boolean(result?.updated)
+    });
+
     // El aviso a Telegram es adicional: si falla, el registro sigue siendo válido.
-    await notifyAdminPilotRegistration(result);
+    const telegramNotification = await notifyAdminPilotRegistration(result);
+
+    console.log('[REGISTRO_PILOTO] Resultado del aviso a Telegram.', telegramNotification);
 
     res.status(result.created ? 201 : 200).json({
       ok: true,

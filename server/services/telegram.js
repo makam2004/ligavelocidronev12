@@ -382,8 +382,20 @@ export async function notifyAdminPilotRegistration(result = {}) {
   }
 
   try {
+    console.log('[AVISO_ADMIN_TELEGRAM] Intentando enviar aviso.', {
+      adminChatId,
+      pilot: pilot.name || 'Sin nombre',
+      requestType
+    });
+
     await sendTelegramMessage(adminChatId, lines.join('\n'), { parseMode: 'HTML' });
-    return { sent: true };
+
+    console.log('[AVISO_ADMIN_TELEGRAM] Aviso enviado correctamente.', {
+      adminChatId,
+      pilot: pilot.name || 'Sin nombre'
+    });
+
+    return { sent: true, adminChatId };
   } catch (error) {
     // Nunca se propaga el error para no bloquear el alta del piloto.
     console.error('No se pudo enviar el aviso de nuevo registro a Telegram:', error?.message || error);
