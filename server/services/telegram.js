@@ -1118,6 +1118,18 @@ export async function handleTelegramUpdate(update) {
     return { handled: true, command };
   }
 
+  if (command === '/chatid') {
+    await sendTelegramMessage(
+      message.chat.id,
+      `📌 <b>Chat ID</b>:\n\n<code>${message.chat.id}</code>`,
+      {
+        messageThreadId: message.message_thread_id,
+        parseMode: 'HTML'
+      }
+    );
+    return { handled: true, command };
+  }
+
   if (command === '/tracks') {
     const tracks = await listTracks({ activeOnly: true });
     const messageThreadId = getTracksThreadId();
