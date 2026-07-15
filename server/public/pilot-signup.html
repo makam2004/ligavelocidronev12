@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alta de piloto | Liga Velocidrone</title>
+  <link rel="stylesheet" href="/css/style-ui.css" />
+</head>
+<body>
+  <main class="wrap admin-wrap">
+    <header class="admin-header">
+      <div>
+        <p class="eyebrow">Liga Velocidrone</p>
+        <h1>Alta de nuevo piloto</h1>
+        <p class="subtitle">Rellena tu nombre visible y enviaremos la solicitud. El alta quedará pendiente hasta que el equipo la revise y la active.</p>
+      </div>
+      <a class="btn btn-secondary" href="/">Volver a la web</a>
+    </header>
+
+    <section class="main-card section-gap">
+      <div class="section-head">
+        <h2>Formulario</h2>
+        <button id="submitPilot" class="btn" type="button">Enviar solicitud</button>
+      </div>
+
+      <label class="field">
+        <span>Nombre visible</span>
+        <input id="pilotName" type="text" placeholder="Ej. MakaMFPV" />
+      </label>
+
+      <p class="help">Usa exactamente el mismo nombre con el que apareces en Velocidrone para poder relacionar tus tiempos con la liga.</p>
+      <p class="help">El ID del piloto se genera automáticamente al enviar la solicitud.</p>
+      <div id="pilotSignupResult" class="result-box muted">Sin acciones todavía.</div>
+    </section>
+  </main>
+
+  <script type="module" src="/js/pilot-signup.js"></script>
+</body>
+</html>

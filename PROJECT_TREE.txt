@@ -1,0 +1,7 @@
+PROJECT_TREE.txt
+server/public/css/style-ui.css
+server/public/index.html
+server/public/js/app.js
+server/services/podiumImage.js
+server/services/telegram.js
+server/services/weekAdmin.js

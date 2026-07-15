@@ -1,0 +1,37 @@
+body.home {
+  background: #0b1220;
+}
+
+body.home::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url('/assets/background.png');
+  background-size: contain;
+  background-position: center top;
+  background-repeat: no-repeat;
+  filter: blur(1px);
+  opacity: 0.62;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body.home::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.12);
+  z-index: 1;
+  pointer-events: none;
+}
+
+body.home .wrap,
+body.home .main-card,
+body.home .hero {
+  position: relative;
+  z-index: 2;
+}
+
+body.home .wrap {
+  padding-top: clamp(48px, 10vh, 128px);
+}

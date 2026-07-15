@@ -1,0 +1,18 @@
+{
+  "name": "velocidrone-league-app",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "smoke-test": "node scripts/smoke-test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "sharp": "^0.33.5",
+	"ws": "^8.x.x"
+  }
+}

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin | Liga Velocidrone</title>
+  <link rel="stylesheet" href="/css/style-ui.css" />
+</head>
+<body>
+  <main class="wrap admin-wrap">
+    <header class="admin-header">
+      <div>
+        <p class="eyebrow">Panel de administración</p>
+        <h1>Configurar pilotos, tracks, Telegram y puntuaciones</h1>
+        <p class="subtitle">Todo lo que cambies aquí se envía al backend protegido con tu <strong>ADMIN_KEY</strong>.</p>
+      </div>
+      <a class="btn btn-secondary" href="/">Volver a la web</a>
+    </header>
+
+    <section class="main-card section-gap">
+      <h2>1) Clave admin</h2>
+      <label class="field">
+        <span>ADMIN_KEY</span>
+        <input id="adminKey" type="password" placeholder="Pega aquí tu ADMIN_KEY" />
+      </label>
+      <p class="help">La clave no se guarda en base de datos. Solo se envía en cada acción admin.</p>
+    </section>
+
+    <section class="main-card section-gap">
+      <div class="section-head">
+        <h2>2) Solicitudes y estado de pilotos</h2>
+        <button id="reloadPilotsList" class="btn btn-secondary" type="button">Recargar pilotos</button>
+      </div>
+      <p class="help">Los pilotos dados de alta desde la web entran pendientes. El sistema les genera un ID automáticamente y aquí puedes activarlos o desactivarlos.</p>
+      <pre id="pilotsResult" class="result-box muted">Sin acciones todavía.</pre>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Estado</th>
+              <th>ID registrado</th>
+              <th>Nombre</th>
+              <th>País</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="pilotsListBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="main-card section-gap">
+      <div class="section-head">
+        <h2>3) Cerrar semana y cambiar los 2 tracks</h2>
+        <button id="changeWeeklyTracks" class="btn" type="button">Cerrar semana y activar tracks nuevos</button>
+      </div>
+      <p class="help">Este es el flujo recomendado para tu liga. Al pulsar el botón se hará, en este orden: <strong>commit</strong> del ranking semanal actual al anual, desactivación de los tracks activos anteriores, activación de los 2 tracks nuevos y vaciado de <code>leaderboard_monitor_state</code>.</p>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Año de temporada</span>
+          <input id="seasonYear" type="number" min="2024" step="1" />
+        </label>
+        <label class="field">
+          <span>Clave de semana</span>
+          <input id="weekKey" type="text" placeholder="Ej. 2026-W11" />
+        </label>
+      </div>
+
+      <div class="main-card section-gap">
+        <h3>Track 1</h3>
+        <div class="grid-2">
+          <label class="field">
+            <span>Nombre visible</span>
+            <input id="weekTrack1Name" type="text" placeholder="Ej. Weekly Track 1" />
+          </label>
+          <label class="field">
+            <span>Escenario</span>
+            <input id="weekTrack1Scenery" type="text" placeholder="Ej. Alpine Lake" />
+          </label>
+        </div>
+        <div class="grid-2">
+          <label class="field">
+            <span>Vueltas</span>
+            <select id="weekTrack1Laps">
+              <option value="1">1 lap</option>
+              <option value="3">3 laps</option>
+            </select>
+          </label>
+        </div>
+        <label class="checkbox-row">
+          <input id="weekTrack1Official" type="checkbox" checked />
+          <span>Track oficial</span>
+        </label>
+        <div id="weekTrack1OfficialFields" class="grid-2">
+          <label class="field">
+            <span>track_id</span>
+            <input id="weekTrack1Id" type="number" min="1" placeholder="Ej. 1234" />
+          </label>
+        </div>
+        <div id="weekTrack1UnofficialFields" class="grid-2 hidden">
+          <label class="field">
+            <span>online_id</span>
+            <input id="weekTrack1OnlineId" type="text" placeholder="Ej. my-track-online-id" />
+          </label>
+        </div>
+      </div>
+
+      <div class="main-card section-gap">
+        <h3>Track 2</h3>
+        <div class="grid-2">
+          <label class="field">
+            <span>Nombre visible</span>
+            <input id="weekTrack2Name" type="text" placeholder="Ej. Weekly Track 2" />
+          </label>
+          <label class="field">
+            <span>Escenario</span>
+            <input id="weekTrack2Scenery" type="text" placeholder="Ej. Downtown" />
+          </label>
+        </div>
+        <div class="grid-2">
+          <label class="field">
+            <span>Vueltas</span>
+            <select id="weekTrack2Laps">
+              <option value="1">1 lap</option>
+              <option value="3" selected>3 laps</option>
+            </select>
+          </label>
+        </div>
+        <label class="checkbox-row">
+          <input id="weekTrack2Official" type="checkbox" checked />
+          <span>Track oficial</span>
+        </label>
+        <div id="weekTrack2OfficialFields" class="grid-2">
+          <label class="field">
+            <span>track_id</span>
+            <input id="weekTrack2Id" type="number" min="1" placeholder="Ej. 5678" />
+          </label>
+        </div>
+        <div id="weekTrack2UnofficialFields" class="grid-2 hidden">
+          <label class="field">
+            <span>online_id</span>
+            <input id="weekTrack2OnlineId" type="text" placeholder="Ej. another-track-online-id" />
+          </label>
+        </div>
+      </div>
+
+      <pre id="weeklyChangeResult" class="result-box muted">Sin acciones todavía.</pre>
+    </section>
+
+    <section class="main-card section-gap">
+      <div class="section-head">
+        <h2>4) Herramientas manuales</h2>
+        <button id="saveTrack" class="btn btn-secondary" type="button">Guardar track suelto</button>
+        <button id="awardWeekly" class="btn btn-secondary" type="button">Guardar semana sin cambiar tracks</button>
+      </div>
+      <p class="help">Estas acciones se dejan como soporte manual. Para tu flujo normal semanal usa siempre el bloque anterior.</p>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Nombre visible</span>
+          <input id="trackName" type="text" placeholder="Ej. Tuesday League Track" />
+        </label>
+        <label class="field">
+          <span>Escenario</span>
+          <input id="trackScenery" type="text" placeholder="Ej. Alpine Lake" />
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Vueltas</span>
+          <select id="laps">
+            <option value="1">1 lap</option>
+            <option value="3">3 laps</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="checkbox-row">
+        <input id="isOfficial" type="checkbox" checked />
+        <span>Track oficial</span>
+      </label>
+
+      <label class="checkbox-row">
+        <input id="trackActive" type="checkbox" checked />
+        <span>Track activo</span>
+      </label>
+
+      <div id="officialFields" class="grid-2">
+        <label class="field">
+          <span>track_id</span>
+          <input id="trackId" type="number" min="1" placeholder="Ej. 1234" />
+        </label>
+      </div>
+
+      <div id="unofficialFields" class="grid-2 hidden">
+        <label class="field">
+          <span>online_id</span>
+          <input id="onlineId" type="text" placeholder="Ej. my-track-online-id" />
+        </label>
+      </div>
+
+      <pre id="saveResult" class="result-box muted">Sin acciones todavía.</pre>
+      <pre id="weeklyResult" class="result-box muted">Sin acciones todavía.</pre>
+    </section>
+
+    <section class="main-card section-gap">
+      <div class="section-head">
+        <h2>5) Telegram</h2>
+        <button id="registerWebhook" class="btn btn-secondary" type="button">Registrar webhook</button>
+        <button id="checkImprovements" class="btn" type="button">Comprobar mejoras ahora</button>
+      </div>
+      <p class="help">Esto llamará a Telegram para enlazar el bot con <code>/api/telegram/webhook/&lt;secret&gt;</code>.</p>
+      <p class="help">También puedes lanzar una comprobación manual de mejoras para validar el monitor sin esperar al intervalo automático.</p>
+      <pre id="telegramResult" class="result-box muted">Sin acciones todavía.</pre>
+    </section>
+
+    <section class="main-card section-gap">
+      <div class="section-head">
+        <h2>6) Estado del sistema</h2>
+        <button id="reloadStatus" class="btn btn-secondary" type="button">Recargar estado</button>
+      </div>
+      <pre id="healthBox" class="result-box muted">Cargando estado…</pre>
+    </section>
+
+    <section class="main-card section-gap">
+      <div class="section-head">
+        <h2>7) Tracks guardados</h2>
+        <button id="reloadTracksList" class="btn btn-secondary" type="button">Recargar tracks</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Escenario</th>
+              <th>Referencia</th>
+              <th>Vueltas</th>
+              <th>Activo</th>
+            </tr>
+          </thead>
+          <tbody id="tracksListBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

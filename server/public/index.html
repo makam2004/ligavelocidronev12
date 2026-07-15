@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Liga Velocidrone</title>
+  <link rel="stylesheet" href="/css/style-ui.css" />
+  <link rel="stylesheet" href="/css/style-home.css" />
+</head>
+<body class="home">
+  <main class="wrap">
+    <header class="hero">
+      <div>
+        <p id="leagueHeading" class="eyebrow eyebrow-main">LIGA VELOCIDRONE · Semana --</p>
+        <h1 id="trackTitle" class="page-title">Cargando datos de la semana…</h1>
+        <p id="trackSubtitle" class="subtitle">Leaderboard por track, ranking semanal por los tracks activos y ranking anual acumulado.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn" href="/alta-piloto">Alta de nuevo piloto</a>
+      </div>
+    </header>
+
+    <section class="main-card section-gap">
+      <div class="section-head">
+        <h2>Vistas</h2>
+      </div>
+      <div id="viewTabs" class="tabs"></div>
+    </section>
+
+    <section class="main-card section-gap">
+      <div class="section-head">
+        <h2>Tracks activos</h2>
+        <button id="reloadTracks" class="btn btn-secondary" type="button">Recargar</button>
+      </div>
+      <div id="tracks"></div>
+    </section>
+
+    <section id="leaderboardSection" class="main-card section-gap">
+      <div class="section-head">
+        <h2>Leaderboard por track</h2>
+        <div id="status" class="status muted">Cargando…</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Piloto</th>
+              <th>País</th>
+              <th>Modelo</th>
+              <th>Tiempo</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="weeklySection" class="main-card section-gap hidden">
+      <div class="section-head">
+        <h2>Ranking semanal</h2>
+        <div id="weeklyStatus" class="status muted">Cargando…</div>
+      </div>
+
+      <div id="weeklyNotice" class="notice muted"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Piloto</th>
+              <th>Puntos</th>
+              <th>Tracks puntuados</th>
+            </tr>
+          </thead>
+          <tbody id="weeklySummaryBody"></tbody>
+        </table>
+      </div>
+
+      <div id="weeklyTrackCards" class="stack-cards"></div>
+    </section>
+
+    <section id="annualSection" class="main-card section-gap hidden">
+      <div class="section-head annual-head">
+        <div>
+          <h2>Ranking anual</h2>
+          <div id="annualStatus" class="status muted">Cargando…</div>
+        </div>
+        <div class="annual-controls">
+          <label class="field compact-field">
+            <span>Año</span>
+            <input id="annualYear" type="number" min="2024" step="1" />
+          </label>
+          <button id="reloadAnnual" class="btn btn-secondary" type="button">Recargar anual</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Piloto</th>
+              <th>Total puntos</th>
+              <th>Semanas puntuadas</th>
+            </tr>
+          </thead>
+          <tbody id="annualBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

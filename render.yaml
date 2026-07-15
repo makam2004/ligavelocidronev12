@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: velocidrone-league
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: ADMIN_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE
+        sync: false
+      - key: VELO_API_URL
+        value: https://velocidrone.co.uk/api/leaderboard
+      - key: VELO_API_TOKEN
+        sync: false
+      - key: SIM_VERSION
+        value: "1.16"
+      - key: CACHE_TTL_MS
+        value: "600000"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
+      - key: TELEGRAM_ALLOWED_CHAT_IDS
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+      - key: TZ
+        value: Europe/Madrid
