@@ -1,7 +1,7 @@
 import { config } from '../config.js';
 import { listTracks, listLeaderboardMonitorState, upsertLeaderboardMonitorState } from './database.js';
 import { getLeagueLeaderboard } from './league.js';
-import { buildLeaderboardMessage } from '../utils/leaderboard.js';
+import { buildLeaderboardMessage, countryCodeToFlag } from '../utils/leaderboard.js';
 import { createHttpError } from '../utils/http.js';
 import { normalizeText, parseLapCount } from '../utils/normalize.js';
 import { getAnnualRankingFromDatabase } from './rankings.js';
@@ -121,7 +121,9 @@ function buildTrackSection(track, results) {
   const topRows = results.map((row) => {
     const pilotName = escapeHtml(row.playername || 'Sin nombre');
     const lapTime = escapeHtml(row.lap_time || 'sin tiempo');
-    return `${rankEmoji(row.position)} <b>${pilotName}</b> — ${lapTime}`;
+    const flag = countryCodeToFlag(row.country);
+    const countrySuffix = flag ? ` ${flag}` : '';
+    return `${rankEmoji(row.position)} <b>${pilotName}</b>${countrySuffix} — ${lapTime}`;
   });
   return lines.concat(topRows).join('\n');
 }
@@ -394,6 +396,55 @@ function buildTracksMessage(tracks) {
   ].join('\n').trim();
 }
 
+
+async function buildCurrentCountryLookup() {
+  const tracks = await listTracks({ activeOnly: true });
+  const byUserId = new Map();
+  const byName = new Map();
+
+  for (const track of tracks) {
+    const leaderboard = await getLeagueLeaderboard({
+      query: track.is_official
+        ? { track_id: track.track_id, laps: track.laps }
+        : { online_id: track.online_id, laps: track.laps }
+    });
+
+    for (const row of leaderboard.results || []) {
+      const country = String(row.country || '').trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(country)) continue;
+
+      const userId = Number(row.user_id);
+      if (Number.isFinite(userId) && userId > 0) {
+        byUserId.set(userId, country);
+      }
+
+      const nameKey = normalizeText(row.playername);
+      if (nameKey) {
+        byName.set(nameKey, country);
+      }
+    }
+  }
+
+  return { byUserId, byName };
+}
+
+function enrichAnnualRankingCountries(annual, lookup) {
+  return {
+    ...annual,
+    results: (annual?.results || []).map((row) => {
+      const userId = Number(row.pilot_user_id);
+      const country = (
+        (Number.isFinite(userId) && userId > 0 ? lookup.byUserId.get(userId) : '')
+        || lookup.byName.get(normalizeText(row.pilot_name))
+        || row.country
+        || ''
+      );
+
+      return { ...row, country };
+    })
+  };
+}
+
 function buildAnnualRankingMessage(annual) {
   const results = annual?.results || [];
   const seasonYear = annual?.season_year || new Date().getFullYear();
@@ -410,7 +461,9 @@ function buildAnnualRankingMessage(annual) {
     const medal = rankEmoji(row.position);
     const name = escapeHtml(row.pilot_name || 'Sin nombre');
     const points = Number(row.total_points) || 0;
-    return `${medal} ${row.position}. <b>${name}</b> — ${points} pt${points === 1 ? '' : 's'}`;
+    const flag = countryCodeToFlag(row.country);
+    const countrySuffix = flag ? ` ${flag}` : '';
+    return `${medal} ${row.position}. <b>${name}</b>${countrySuffix} — ${points} pt${points === 1 ? '' : 's'}`;
   });
 
   return [
@@ -422,7 +475,14 @@ function buildAnnualRankingMessage(annual) {
 
 export async function buildTelegramSupertopMessage({ seasonYear } = {}) {
   const annual = await getAnnualRankingFromDatabase({ seasonYear });
-  return buildAnnualRankingMessage(annual);
+
+  try {
+    const countryLookup = await buildCurrentCountryLookup();
+    return buildAnnualRankingMessage(enrichAnnualRankingCountries(annual, countryLookup));
+  } catch (error) {
+    console.warn('No se pudieron añadir las banderas al ranking anual:', error.message);
+    return buildAnnualRankingMessage(annual);
+  }
 }
 
 export async function sendTracksMessageToChats(chatIds = getBroadcastChatIds()) {

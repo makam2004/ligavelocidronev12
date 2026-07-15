@@ -1,6 +1,16 @@
 import { config } from '../config.js';
 import { createHttpError } from './http.js';
 
+
+export function countryCodeToFlag(country) {
+  const code = String(country || '').trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) return '';
+
+  return String.fromCodePoint(
+    ...Array.from(code).map((character) => 127397 + character.charCodeAt(0))
+  );
+}
+
 export function raceModeFromLaps(laps) {
   return Number(laps) === 3 ? 6 : 3;
 }
@@ -106,7 +116,9 @@ export function buildLeaderboardMessage(track, results) {
   }
 
   const lines = results.slice(0, 10).map((row) => {
-    return `${row.position}. ${row.playername || 'Sin nombre'} — ${row.lap_time || 'sin tiempo'}`;
+    const flag = countryCodeToFlag(row.country);
+    const countrySuffix = flag ? ` ${flag}` : '';
+    return `${row.position}. ${row.playername || 'Sin nombre'}${countrySuffix} — ${row.lap_time || 'sin tiempo'}`;
   });
 
   return header.concat(lines).join('\n');

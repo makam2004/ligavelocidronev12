@@ -60,19 +60,6 @@ async function fetchVelocidroneTrackTimes(track) {
   }
 
   const rawRows = parseVelocidronePayload(bodyText);
-
-  // LOG TEMPORAL: permite comprobar qué campos devuelve Velocidrone.
-  // Elimina este bloque después de revisar los logs de Render.
-  console.log(
-    'Campos recibidos desde Velocidrone:',
-    rawRows[0] ? Object.keys(rawRows[0]) : []
-  );
-
-  console.log(
-    'Primer resultado recibido desde Velocidrone:',
-    rawRows[0] || 'Sin resultados'
-  );
-
   leaderboardCache.set(cacheKey, {
     createdAt: now,
     rawRows
