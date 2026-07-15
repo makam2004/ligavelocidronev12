@@ -842,14 +842,17 @@ function buildHelpMenu(language = 'es') {
     inline_keyboard: [
       [
         { text: isEnglish ? '🏁 Weekly tracks' : '🏁 Tracks semanales', callback_data: `help:tracks:${language}` },
-        { text: isEnglish ? '📊 Weekly top' : '📊 Top semanal', callback_data: `help:top:${language}` }
+        { text: isEnglish ? '📊 Weekly results' : '📊 Resultados semanales', callback_data: `help:top:${language}` }
       ],
       [
-        { text: isEnglish ? '🏆 Annual ranking' : '🏆 Ranking anual', callback_data: `help:supertop:${language}` },
-        { text: '🎮 Leaderboard', callback_data: `help:leaderboard:${language}` }
+        { text: isEnglish ? '🏆 Annual ranking' : '🏆 Ranking anual', callback_data: `help:supertop:${language}` }
       ],
       [
-        { text: isEnglish ? '❓ How it works' : '❓ Cómo funciona', callback_data: `help:how:${language}` }
+        { text: isEnglish ? '🎮 Track leaderboard' : '🎮 Clasificación por modalidad', callback_data: `help:leaderboard:${language}` }
+      ],
+      [
+        { text: isEnglish ? '📖 How it works' : '📖 Cómo funciona', callback_data: `help:how:${language}` },
+        { text: isEnglish ? '🏅 Scoring system' : '🏅 Puntuación', callback_data: `help:scoring:${language}` }
       ],
       [
         { text: isEnglish ? '🌐 Change language' : '🌐 Cambiar idioma', callback_data: 'help:language' }
@@ -866,6 +869,23 @@ function buildHelpBackKeyboard(language = 'es') {
       ],
       [
         { text: language === 'en' ? '🌐 Change language' : '🌐 Cambiar idioma', callback_data: 'help:language' }
+      ]
+    ]
+  };
+}
+
+function buildLeaderboardKeyboard(language = 'es') {
+  const isEnglish = language === 'en';
+  return {
+    inline_keyboard: [
+      [
+        { text: isEnglish ? '🏁 Single Class (1 lap)' : '🏁 Single Class (1 vuelta)', callback_data: `help:leaderboard1:${language}` }
+      ],
+      [
+        { text: isEnglish ? '🏁 Three Lap Race (3 laps)' : '🏁 Three Lap Race (3 vueltas)', callback_data: `help:leaderboard3:${language}` }
+      ],
+      [
+        { text: isEnglish ? '⬅️ Back to menu' : '⬅️ Volver al menú', callback_data: `help:language:${language}` }
       ]
     ]
   };
@@ -902,6 +922,7 @@ async function handleHelpCallback(callbackQuery) {
   const message = callbackQuery?.message;
   const chatId = message?.chat?.id;
   const messageId = message?.message_id;
+  const currentThreadId = message?.message_thread_id;
 
   if (!data.startsWith('help:') || !chatId || !messageId) {
     return { handled: false, reason: 'Callback de ayuda no procesable.' };
@@ -912,9 +933,8 @@ async function handleHelpCallback(callbackQuery) {
     return { handled: false, reason: 'Chat no autorizado.' };
   }
 
-  await answerTelegramCallback(callbackQuery.id);
-
   if (data === 'help:language') {
+    await answerTelegramCallback(callbackQuery.id);
     await editTelegramMessage(
       chatId,
       messageId,
@@ -929,40 +949,83 @@ async function handleHelpCallback(callbackQuery) {
   const isEnglish = language === 'en';
 
   if (section === 'language') {
+    await answerTelegramCallback(callbackQuery.id);
     await editTelegramMessage(
       chatId,
       messageId,
       isEnglish
-        ? '<b>🚀 Velocidrone League Help</b>\n\nSelect an option to view the available commands and parameters:'
-        : '<b>🚀 Ayuda de la Liga Velocidrone</b>\n\nSelecciona una opción para ver los comandos y parámetros disponibles:',
+        ? '<b>🚀 Velocidrone League</b>\n\nSelect an option:'
+        : '<b>🚀 Liga Velocidrone</b>\n\nSelecciona una opción:',
       { parseMode: 'HTML', replyMarkup: buildHelpMenu(language) }
     );
     return { handled: true, callback: data, language };
   }
 
+  if (section === 'tracks') {
+    await answerTelegramCallback(callbackQuery.id, isEnglish ? 'Loading weekly tracks…' : 'Cargando tracks semanales…');
+    const tracks = await listTracks({ activeOnly: true });
+    const messageThreadId = getTracksThreadId();
+    await sendTelegramMessage(chatId, buildTracksMessage(tracks), { messageThreadId, parseMode: 'HTML' });
+    return { handled: true, callback: data, language, command: '/tracks', tracks: tracks.length, messageThreadId };
+  }
+
+  if (section === 'top') {
+    await answerTelegramCallback(callbackQuery.id, isEnglish ? 'Loading weekly results…' : 'Cargando resultados semanales…');
+    const text = await buildTelegramTopMessage();
+    const messageThreadId = getTopThreadId();
+    await sendTelegramMessage(chatId, text, { messageThreadId, parseMode: 'HTML' });
+    return { handled: true, callback: data, language, command: '/top', messageThreadId };
+  }
+
+  if (section === 'supertop') {
+    await answerTelegramCallback(callbackQuery.id, isEnglish ? 'Loading annual ranking…' : 'Cargando ranking anual…');
+    const text = await buildTelegramSupertopMessage();
+    const messageThreadId = getSupertopThreadId();
+    await sendTelegramMessage(chatId, text, { messageThreadId, parseMode: 'HTML' });
+    return { handled: true, callback: data, language, command: '/supertop', messageThreadId };
+  }
+
+  if (section === 'leaderboard') {
+    await answerTelegramCallback(callbackQuery.id);
+    await editTelegramMessage(
+      chatId,
+      messageId,
+      isEnglish
+        ? '<b>🎮 Track leaderboard</b>\n\nChoose the race mode:'
+        : '<b>🎮 Clasificación por modalidad</b>\n\nElige el modo de carrera:',
+      { parseMode: 'HTML', replyMarkup: buildLeaderboardKeyboard(language) }
+    );
+    return { handled: true, callback: data, language, section };
+  }
+
+  if (section === 'leaderboard1' || section === 'leaderboard3') {
+    const laps = section === 'leaderboard1' ? 1 : 3;
+    await answerTelegramCallback(callbackQuery.id, isEnglish ? 'Loading leaderboard…' : 'Cargando clasificación…');
+    const leaderboard = await getLeagueLeaderboard({ query: { laps } });
+    await sendTelegramMessage(
+      chatId,
+      buildLeaderboardMessage(leaderboard.track, leaderboard.results),
+      { messageThreadId: currentThreadId }
+    );
+    return { handled: true, callback: data, language, command: '/leaderboard', laps };
+  }
+
   const pages = {
-    tracks: isEnglish
-      ? '<b>🏁 Weekly tracks</b>\n\n<b>Command:</b> /tracks\n\nShows the active tracks for the current week, their race mode and scenery.\n\nThe tracks change every Sunday.'
-      : '<b>🏁 Tracks semanales</b>\n\n<b>Comando:</b> /tracks\n\nMuestra los tracks activos de la semana, su modo de carrera y el escenario.\n\nLos tracks cambian cada domingo.',
-    top: isEnglish
-      ? '<b>📊 Weekly top</b>\n\n<b>Command:</b> /top\n\nShows each active track and the best weekly time recorded by every registered pilot.\n\nThe bot collects the times automatically.'
-      : '<b>📊 Top semanal</b>\n\n<b>Comando:</b> /top\n\nMuestra cada track activo y el mejor tiempo semanal registrado por cada piloto dado de alta.\n\nEl bot recoge los tiempos automáticamente.',
-    supertop: isEnglish
-      ? '<b>🏆 Annual ranking</b>\n\n<b>Command:</b> /supertop\n\nShows the annual ranking based on the points accumulated during the season.\n\nYou can also request a year, for example: /supertop 2026'
-      : '<b>🏆 Ranking anual</b>\n\n<b>Comando:</b> /supertop\n\nMuestra la clasificación anual según los puntos acumulados durante la temporada.\n\nTambién puedes indicar un año, por ejemplo: /supertop 2026',
-    leaderboard: isEnglish
-      ? '<b>🎮 Track leaderboard</b>\n\n<b>Commands:</b>\n/leaderboard 1\n/leaderboard 3\n/lb 1\n/lb 3\n\nUse <b>1</b> for Single Class and <b>3</b> for Three Lap Race.'
-      : '<b>🎮 Clasificación por modalidad</b>\n\n<b>Comandos:</b>\n/leaderboard 1\n/leaderboard 3\n/lb 1\n/lb 3\n\nUsa <b>1</b> para Single Class y <b>3</b> para Three Lap Race.',
     how: isEnglish
-      ? '<b>❓ How the league works</b>\n\n1. Register with your exact Velocidrone nickname.\n2. Check the weekly tracks with /tracks.\n3. Race during the week.\n4. The bot collects your best times automatically.\n5. Check the weekly results with /top.\n6. Check the annual ranking with /supertop.\n\nYou do not need to submit your times manually.'
-      : '<b>❓ Cómo funciona la liga</b>\n\n1. Regístrate con tu nick exacto de Velocidrone.\n2. Consulta los tracks semanales con /tracks.\n3. Corre durante la semana.\n4. El bot recoge automáticamente tus mejores tiempos.\n5. Consulta los resultados semanales con /top.\n6. Consulta el ranking anual con /supertop.\n\nNo necesitas enviar los tiempos manualmente.'
+      ? '<b>📖 How the Velocidrone League Works</b>\n\n1️⃣ Register using your exact Velocidrone nickname at:\nhttps://ligavelocidrone.onrender.com\n\n2️⃣ Check the weekly tracks.\n\n3️⃣ Race throughout the week (Sunday to Sunday).\n\n4️⃣ The bot automatically records your best times.\n\n5️⃣ View the weekly results with /top.\n\n6️⃣ View the annual ranking with /supertop.\n\n✅ You do not need to submit your times manually.'
+      : '<b>📖 Cómo funciona la Liga Velocidrone</b>\n\n1️⃣ Regístrate con tu nick exacto de Velocidrone en:\nhttps://ligavelocidrone.onrender.com\n\n2️⃣ Consulta los tracks semanales.\n\n3️⃣ Corre durante la semana (de domingo a domingo).\n\n4️⃣ El bot recoge automáticamente tus mejores tiempos.\n\n5️⃣ Consulta los resultados semanales con /top.\n\n6️⃣ Consulta el ranking anual con /supertop.\n\n✅ No necesitas enviar los tiempos manualmente.',
+    scoring: isEnglish
+      ? '<b>🏅 Scoring System</b>\n\nAt the end of each week, points are awarded separately for each track.\n\n🥇 1st → 10 points\n🥈 2nd → 9 points\n🥉 3rd → 8 points\n4th → 7 points\n5th → 6 points\n6th → 5 points\n7th → 4 points\n8th → 3 points\n9th → 2 points\n10th → 1 point\n\nFrom 11th place onwards, every pilot who completes the track receives 1 point.\n\nThe points earned on both tracks are added to the annual ranking.'
+      : '<b>🏅 Sistema de puntuación</b>\n\nAl finalizar cada semana, cada track reparte puntos de forma independiente.\n\n🥇 1.º → 10 puntos\n🥈 2.º → 9 puntos\n🥉 3.º → 8 puntos\n4.º → 7 puntos\n5.º → 6 puntos\n6.º → 5 puntos\n7.º → 4 puntos\n8.º → 3 puntos\n9.º → 2 puntos\n10.º → 1 punto\n\nA partir del puesto 11.º, cada piloto que complete el track recibe 1 punto.\n\nLos puntos obtenidos en ambos tracks se suman al ranking anual.'
   };
 
   const text = pages[section];
   if (!text) {
+    await answerTelegramCallback(callbackQuery.id);
     return { handled: false, reason: 'Opción de ayuda desconocida.' };
   }
 
+  await answerTelegramCallback(callbackQuery.id);
   await editTelegramMessage(chatId, messageId, text, {
     parseMode: 'HTML',
     replyMarkup: buildHelpBackKeyboard(language)
