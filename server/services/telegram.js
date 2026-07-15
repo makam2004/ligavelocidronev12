@@ -347,6 +347,50 @@ export async function sendTelegramMessage(chatId, text, options = {}) {
   return results;
 }
 
+
+export async function notifyAdminPilotRegistration(result = {}) {
+  const adminChatId = String(config.telegram.adminChatId || '').trim();
+  const pilot = result?.pilot || {};
+
+  if (!adminChatId) {
+    console.warn('Aviso de registro no enviado: TELEGRAM_ADMIN_CHAT_ID no está configurado.');
+    return { sent: false, reason: 'admin_chat_not_configured' };
+  }
+
+  if (!config.telegram.botToken) {
+    console.warn('Aviso de registro no enviado: TELEGRAM_BOT_TOKEN no está configurado.');
+    return { sent: false, reason: 'bot_token_not_configured' };
+  }
+
+  const requestType = result?.created
+    ? 'Nueva solicitud'
+    : 'Solicitud actualizada';
+  const registeredAt = formatSpainDateTimeFromIso(pilot.created_at) || formatSpainDateTime();
+  const adminPanelUrl = config.publicBaseUrl ? `${config.publicBaseUrl}/admin.html` : '';
+
+  const lines = [
+    '🆕 <b>Solicitud de registro</b>',
+    '',
+    `👤 <b>Piloto:</b> ${escapeHtml(pilot.name || 'Sin nombre')}`,
+    `📝 <b>Tipo:</b> ${escapeHtml(requestType)}`,
+    '⏳ <b>Estado:</b> Pendiente de aprobación',
+    `📅 <b>Fecha:</b> ${escapeHtml(registeredAt)}`
+  ];
+
+  if (adminPanelUrl) {
+    lines.push('', `🔗 <a href="${escapeHtml(adminPanelUrl)}">Abrir panel de administración</a>`);
+  }
+
+  try {
+    await sendTelegramMessage(adminChatId, lines.join('\n'), { parseMode: 'HTML' });
+    return { sent: true };
+  } catch (error) {
+    // Nunca se propaga el error para no bloquear el alta del piloto.
+    console.error('No se pudo enviar el aviso de nuevo registro a Telegram:', error?.message || error);
+    return { sent: false, reason: 'telegram_error', error: error?.message || String(error) };
+  }
+}
+
 export async function registerTelegramWebhook() {
   if (!isTelegramConfigured()) {
     throw createHttpError(503, 'Telegram no está totalmente configurado. Faltan TELEGRAM_BOT_TOKEN o TELEGRAM_WEBHOOK_SECRET.');

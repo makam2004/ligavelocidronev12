@@ -14,7 +14,7 @@ import {
 import { getLeagueLeaderboard, validateTrackInput } from './services/league.js';
 import { getAnnualRankingFromDatabase, getWeeklyRankingPreview, storeCurrentWeekScores } from './services/rankings.js';
 import { replaceWeeklyTracks } from './services/weekAdmin.js';
-import { checkLeaderboardImprovements, getTelegramStatus, handleTelegramUpdate, registerTelegramWebhook, sendTopMessageToChats } from './services/telegram.js';
+import { checkLeaderboardImprovements, getTelegramStatus, handleTelegramUpdate, notifyAdminPilotRegistration, registerTelegramWebhook, sendTopMessageToChats } from './services/telegram.js';
 import { validatePilotRegistrationInput, validatePilotStatusInput } from './services/pilots.js';
 import { asyncHandler } from './utils/http.js';
 import { SPAIN_TIMEZONE, formatSpainDateTime, toSpainOffsetIso } from './utils/date.js';
@@ -48,6 +48,9 @@ export function createApp() {
   app.post('/api/pilots/register', asyncHandler(async (req, res) => {
     const pilot = validatePilotRegistrationInput(req.body || {});
     const result = await registerPendingPilot(pilot);
+
+    // El aviso a Telegram es adicional: si falla, el registro sigue siendo válido.
+    await notifyAdminPilotRegistration(result);
 
     res.status(result.created ? 201 : 200).json({
       ok: true,
