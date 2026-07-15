@@ -1094,17 +1094,6 @@ async function handleHelpCallback(callbackQuery) {
 }
 
 export async function handleTelegramUpdate(update) {
-  const diagnosticMessage = update?.message || update?.edited_message;
-  const diagnosticCallback = update?.callback_query;
-  console.log('TELEGRAM_UPDATE_DIAGNOSTIC', {
-    updateId: update?.update_id ?? null,
-    type: diagnosticCallback ? 'callback_query' : diagnosticMessage ? 'message' : 'other',
-    chatId: diagnosticMessage?.chat?.id ?? diagnosticCallback?.message?.chat?.id ?? null,
-    chatType: diagnosticMessage?.chat?.type ?? diagnosticCallback?.message?.chat?.type ?? null,
-    chatTitle: diagnosticMessage?.chat?.title ?? diagnosticCallback?.message?.chat?.title ?? null,
-    text: diagnosticMessage?.text ?? null,
-    fromId: diagnosticMessage?.from?.id ?? diagnosticCallback?.from?.id ?? null
-  });
   const callbackQuery = update?.callback_query;
   if (callbackQuery) {
     return handleHelpCallback(callbackQuery);
@@ -1119,21 +1108,6 @@ export async function handleTelegramUpdate(update) {
   if (!command.startsWith('/')) {
     return { handled: false, reason: 'No es un comando.' };
   }
-
-  // Comando temporal permitido incluso en chats aún no autorizados.
-  // Sirve para obtener el ID del nuevo grupo de administradores.
-  if (command === '/chatid') {
-    await sendTelegramMessage(
-      message.chat.id,
-      `📌 <b>Chat ID</b>:\n\n<code>${message.chat.id}</code>`,
-      {
-        messageThreadId: message.message_thread_id,
-        parseMode: 'HTML'
-      }
-    );
-    return { handled: true, command };
-  }
-
 
   if (!isAllowedChat(message.chat.id)) {
     return { handled: false, reason: 'Chat no autorizado.' };
